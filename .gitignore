@@ -1,0 +1,11 @@
+# Dati personali / non pubblicabili
+personal/
+vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# IDE
+.idea/
+.vscode/

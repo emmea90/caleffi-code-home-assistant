@@ -1,0 +1,10 @@
+{
+  "domain": "caleffi_code",
+  "name": "Caleffi CODE",
+  "codeowners": ["@emmea90"],
+  "config_flow": true,
+  "documentation": "https://github.com/emmea90/caleffi-code-home-assistant",
+  "issue_tracker": "https://github.com/emmea90/caleffi-code-home-assistant/issues",
+  "iot_class": "cloud_polling",
+  "version": "0.1.0"
+}
