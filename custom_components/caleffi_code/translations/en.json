@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Connect to Caleffi CODE",
-        "description": "Sign in with your Caleffi CODE account credentials. The password is used only for login and is not stored.",
+        "description": "Sign in with your Caleffi CODE account. Email and password are stored in Home Assistant and are used only to renew the session when the token expires.",
         "data": {
           "email": "Email",
           "password": "Password"
@@ -11,6 +11,7 @@
       },
       "reauth_confirm": {
         "title": "Re-authenticate with Caleffi CODE",
+        "description": "Enter the email and password again. Home Assistant stores them and uses them to request a new token when the session expires.",
         "data": {
           "email": "Email",
           "password": "Password"

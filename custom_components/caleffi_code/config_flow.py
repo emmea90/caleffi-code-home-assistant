@@ -50,6 +50,7 @@ class CaleffiCodeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     title=f"Caleffi CODE ({user_input[CONF_EMAIL]})",
                     data={
                         CONF_EMAIL: user_input[CONF_EMAIL],
+                        CONF_PASSWORD: user_input[CONF_PASSWORD],
                         CONF_REFRESH_TOKEN: tokens["refresh_token"],
                     },
                 )
@@ -105,6 +106,8 @@ class CaleffiCodeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         self._reauth_entry,
                         data={
                             **self._reauth_entry.data,
+                            CONF_EMAIL: user_input[CONF_EMAIL],
+                            CONF_PASSWORD: user_input[CONF_PASSWORD],
                             CONF_REFRESH_TOKEN: tokens["refresh_token"],
                         },
                     )
