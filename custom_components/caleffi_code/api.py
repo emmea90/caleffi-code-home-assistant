@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from collections.abc import Awaitable, Callable
 from inspect import isawaitable
 from typing import Any
@@ -13,7 +14,7 @@ import aiohttp
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import APP_VERSION
+from .const import APP_VERSION, REAUTH_INTERVAL_MINUTES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class CaleffiApi:
         base_url: str,
         email: str,
         refresh_token: str | None = None,
+        password: str | None = None,
         on_refresh_token: Callable[[str], None | Awaitable[None]] | None = None,
     ) -> None:
         parsed_url = urlsplit(base_url)
@@ -55,12 +57,76 @@ class CaleffiApi:
         self._base_url = base_url.rstrip("/") + "/"
         self._email = email
         self._refresh_token = refresh_token
+        self._password = password
         self._access_token: str | None = None
         self._on_refresh_token = on_refresh_token
         self._refresh_lock = asyncio.Lock()
+        self._password_retry_at = 0.0
 
     async def async_login(self, password: str) -> dict[str, Any]:
         """Log in and return the API token response."""
+        async with self._refresh_lock:
+            self._password = password
+            return await self._login_unlocked(password)
+
+    async def async_refresh_access_token(self) -> None:
+        """Renew the access token, logging in again if the refresh token is dead."""
+        await self.async_reauthenticate()
+
+    async def async_reauthenticate(self) -> None:
+        """Renew the session with the refresh token or the stored password."""
+        async with self._refresh_lock:
+            await self._reauthenticate_unlocked()
+
+    async def _reauthenticate_unlocked(self) -> None:
+        refresh_error: CaleffiApiError | None = None
+        if self._refresh_token:
+            try:
+                await self._refresh_unlocked()
+                return
+            except CaleffiApiError as err:
+                if err.status not in (400, 401, 403) or not self._password:
+                    raise
+                refresh_error = err
+                _LOGGER.info(
+                    "Caleffi CODE refresh token was rejected (HTTP %s); signing in again",
+                    err.status,
+                )
+
+        if not self._password:
+            raise CaleffiApiError("No Caleffi CODE refresh token is configured", 401)
+
+        if time.monotonic() < self._password_retry_at:
+            if refresh_error is not None:
+                raise refresh_error
+            raise CaleffiApiError("Caleffi CODE stored credentials were rejected", 401)
+
+        try:
+            await self._login_unlocked(self._password)
+        except CaleffiApiError as err:
+            if err.status in (400, 401, 403):
+                self._password_retry_at = time.monotonic() + REAUTH_INTERVAL_MINUTES * 60
+            raise
+        self._password_retry_at = 0.0
+        _LOGGER.info("Caleffi CODE session renewed with stored credentials")
+
+    async def _refresh_unlocked(self) -> None:
+        if not self._refresh_token:
+            raise CaleffiApiError("No Caleffi CODE refresh token is configured", 401)
+
+        result = await self._request(
+            "POST",
+            "token",
+            json_body={
+                "refresh_token": self._refresh_token,
+                "email": self._email,
+            },
+            headers={"x-refresh-tkn": "false"},
+            authenticated=False,
+        )
+        await self._set_tokens(result)
+
+    async def _login_unlocked(self, password: str) -> dict[str, Any]:
         result = await self._request(
             "POST",
             "user/login",
@@ -70,24 +136,6 @@ class CaleffiApi:
         await self._set_tokens(result)
         return result
 
-    async def async_refresh_access_token(self) -> None:
-        """Exchange the stored refresh token for a new access token."""
-        if not self._refresh_token:
-            raise CaleffiApiError("No Caleffi CODE refresh token is configured", 401)
-
-        async with self._refresh_lock:
-            result = await self._request(
-                "POST",
-                "token",
-                json_body={
-                    "refresh_token": self._refresh_token,
-                    "email": self._email,
-                },
-                headers={"x-refresh-tkn": "false"},
-                authenticated=False,
-            )
-            await self._set_tokens(result)
-
     async def async_request(
         self,
         method: str,
@@ -96,7 +144,8 @@ class CaleffiApi:
         params: dict[str, Any] | None = None,
         json_body: dict[str, Any] | None = None,
     ) -> Any:
-        """Make an authenticated API request, refreshing once if needed."""
+        """Make an authenticated API request, renewing the session once if needed."""
+        token_before = self._access_token
         try:
             return await self._request(
                 method,
@@ -105,10 +154,12 @@ class CaleffiApi:
                 json_body=json_body,
             )
         except CaleffiApiError as err:
-            if err.status not in (400, 401) or not self._is_expired_token(err):
+            if not self._should_reauthenticate(err):
                 raise
 
-        await self.async_refresh_access_token()
+        async with self._refresh_lock:
+            if not self._access_token or self._access_token == token_before:
+                await self._reauthenticate_unlocked()
         return await self._request(method, path, params=params, json_body=json_body)
 
     async def _request(
@@ -197,6 +248,13 @@ class CaleffiApi:
         error = payload.get("error")
         code = error.get("code") if isinstance(error, dict) else payload.get("code")
         return str(code) if code is not None else None
+
+    @staticmethod
+    def _should_reauthenticate(err: CaleffiApiError) -> bool:
+        """Return True when a rejected call should mint a new session."""
+        if err.status == 401:
+            return True
+        return err.status in (400, 403) and CaleffiApi._is_expired_token(err)
 
     @staticmethod
     def _is_expired_token(err: CaleffiApiError) -> bool:

@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Collega Caleffi CODE",
-        "description": "Accedi con le credenziali del tuo account Caleffi CODE. La password viene usata solo per il login e non viene salvata.",
+        "description": "Accedi con le credenziali del tuo account Caleffi CODE. Email e password restano salvate in Home Assistant e servono solo per rinnovare la sessione quando il token scade.",
         "data": {
           "email": "Email",
           "password": "Password"
@@ -11,6 +11,7 @@
       },
       "reauth_confirm": {
         "title": "Autentica nuovamente Caleffi CODE",
+        "description": "Inserisci di nuovo email e password. Restano salvate in Home Assistant e vengono usate per ottenere un nuovo token quando la sessione scade.",
         "data": {
           "email": "Email",
           "password": "Password"

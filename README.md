@@ -25,6 +25,7 @@ Dettagli:
 | Preset | `auto`, `eco`, `holiday`, `manual`, `off`, `party`, `cleaning`, `forced_off` |
 | Setpoint manuale | Dura 2 ore, come nell'app Caleffi, poi la zona torna al programma |
 | Aggiornamento | Ogni 2 minuti (polling cloud) |
+| Sessione | Rinnovo ogni 30 minuti; se il token è scaduto, nuovo login con le credenziali salvate |
 | Zone nuove | Rilevate automaticamente, senza riavviare |
 | Entità sensore | `sensor.caleffi_<nome_zona>_temperatura` |
 
@@ -48,7 +49,9 @@ Dettagli:
 2. Cerca **Caleffi CODE**.
 3. Inserisci email e password del tuo account Caleffi.
 
-La password viene usata solo per il login e non viene salvata: Home Assistant conserva soltanto il refresh token restituito dall'API. Se il token scade, Home Assistant ti chiede di autenticarti di nuovo.
+Email e password restano salvate nella configurazione locale di Home Assistant. L'integrazione rinnova il token da sola: se il refresh token non è più valido, ripete il login con quelle credenziali. Ogni 30 minuti rinnova la sessione anche senza errori. Se le credenziali non sono più accettate, Home Assistant chiede di inserirle di nuovo.
+
+Se l'integrazione era già configurata prima di questo aggiornamento, completa una volta la richiesta di nuova autenticazione: la password precedente non era stata salvata.
 
 La connessione usa HTTPS con la verifica standard dei certificati TLS.
 
@@ -58,6 +61,7 @@ I sensori di temperatura hanno `state_class: measurement`, quindi funzionano con
 
 ## Risoluzione dei problemi
 
+- **Richiesta di nuova autenticazione dopo l'aggiornamento:** inserisci di nuovo email e password una sola volta, così l'integrazione può rinnovare il token da sola.
 - **Accesso non riuscito:** controlla email e password dell'account Caleffi CODE.
 - **Impossibile collegarsi:** verifica la connessione internet di Home Assistant; l'integrazione dipende dal cloud Caleffi.
 - **Zone mancanti:** attendi il successivo aggiornamento (2 minuti) o ricarica l'integrazione.
