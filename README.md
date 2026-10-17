@@ -72,6 +72,8 @@ Per segnalare un problema apri una [issue](https://github.com/emmea90/caleffi-co
 
 Il repository segue git flow: `main` contiene le release, `develop` il lavoro in corso.
 
+Un tag `vX.Y.Z` su `main`, con la stessa versione di `manifest.json`, fa partire GitHub Actions: crea la release e allega `caleffi_code.zip`. HACS installa quello zip. A ogni push e pull request partono anche la validazione HACS e hassfest.
+
 ## Licenza
 
 [MIT](LICENSE)
