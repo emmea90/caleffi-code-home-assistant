@@ -134,6 +134,7 @@ I sensori di temperatura hanno `state_class: measurement`, quindi funzionano con
 - **Accesso non riuscito:** controlla email e password dell'account Caleffi CODE.
 - **Impossibile collegarsi:** verifica la connessione internet di Home Assistant; l'integrazione dipende dal cloud Caleffi.
 - **Zone mancanti:** attendi il successivo aggiornamento (2 minuti) o ricarica l'integrazione.
+- **Testine non disponibili:** se il cloud restituisce HTTP 500 per i dati delle valvole, il termostato e i sensori della zona restano disponibili, ma le entità della testina vengono saltate; controlla i registri per il dettaglio.
 - **Dettagli degli errori:** apri **Impostazioni → Sistema → Registri** e cerca `caleffi_code` o `Caleffi CODE`. Un errore HTTP include metodo e percorso API richiesto; oscura email, seriali e token prima di condividere i log.
 
 Per segnalare un problema apri una [issue](https://github.com/emmea90/caleffi-code-home-assistant/issues) indicando la versione di Home Assistant e i log (senza credenziali).

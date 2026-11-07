@@ -17,6 +17,8 @@ from homeassistant.helpers.update_coordinator import (
 from .api import CaleffiApi, CaleffiApiError
 from .const import DOMAIN, UPDATE_INTERVAL_MINUTES
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class CaleffiCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
     """Fetch gateways and their zones from the Caleffi cloud."""
@@ -70,11 +72,24 @@ class CaleffiCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
                             f"A Caleffi CODE zone on {serial} has no zone identifier"
                         )
                     zone_id = str(zone_id)
-                    devices = await self.api.async_request(
-                        "GET",
-                        f"code/{quote(serial, safe='')}/zone/"
-                        f"{quote(zone_id, safe='')}/device/confort_control",
-                    )
+                    try:
+                        devices = await self.api.async_request(
+                            "GET",
+                            f"code/{quote(serial, safe='')}/zone/"
+                            f"{quote(zone_id, safe='')}/device/confort_control",
+                        )
+                    except CaleffiApiError as err:
+                        if err.status != 500:
+                            raise
+                        _LOGGER.warning(
+                            "Unable to load Caleffi CODE valves for gateway %s "
+                            "zone %s; valve entities are unavailable: %s",
+                            serial,
+                            zone_id,
+                            err,
+                        )
+                        zone_data[zone_id] = {**zone, "valves": {}}
+                        continue
                     if not isinstance(devices, list):
                         raise CaleffiApiError(
                             f"Caleffi CODE returned an invalid valve list for "
@@ -98,12 +113,25 @@ class CaleffiCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
                             )
                         device_serial = str(device_serial)
                         device_id = f"1-{device_serial}"
-                        params = await self.api.async_request(
-                            "GET",
-                            f"code/{quote(serial, safe='')}/zone/"
-                            f"{quote(zone_id, safe='')}/device/confort_control/"
-                            f"{quote(str(device_id), safe='')}",
-                        )
+                        try:
+                            params = await self.api.async_request(
+                                "GET",
+                                f"code/{quote(serial, safe='')}/zone/"
+                                f"{quote(zone_id, safe='')}/device/confort_control/"
+                                f"{quote(str(device_id), safe='')}",
+                            )
+                        except CaleffiApiError as err:
+                            if err.status != 500:
+                                raise
+                            _LOGGER.warning(
+                                "Unable to load parameters for Caleffi CODE valve "
+                                "%s in gateway %s zone %s; skipping valve: %s",
+                                device_serial,
+                                serial,
+                                zone_id,
+                                err,
+                            )
+                            continue
                         if not isinstance(params, dict):
                             raise CaleffiApiError(
                                 f"Caleffi CODE returned invalid parameters for "
