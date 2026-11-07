@@ -199,7 +199,7 @@ class CaleffiApi:
                         f"Caleffi CODE API returned HTTP {response.status}"
                     )
                     raise CaleffiApiError(
-                        message,
+                        f"{message} ({method.upper()} {path})",
                         response.status,
                         self._error_code(payload),
                     )

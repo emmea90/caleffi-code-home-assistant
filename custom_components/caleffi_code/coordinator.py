@@ -101,7 +101,7 @@ class CaleffiCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
                         params = await self.api.async_request(
                             "GET",
                             f"code/{quote(serial, safe='')}/zone/"
-                            f"{quote(zone_id, safe='')}/device/"
+                            f"{quote(zone_id, safe='')}/device/confort_control/"
                             f"{quote(str(device_id), safe='')}",
                         )
                         if not isinstance(params, dict):
