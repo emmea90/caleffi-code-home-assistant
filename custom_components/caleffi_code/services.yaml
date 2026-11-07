@@ -1,0 +1,137 @@
+set_zone_schedule:
+  name: Imposta programmazione giornaliera
+  description: Sostituisce tutte le fasce orarie di un giorno per una zona.
+  fields:
+    gateway_serial:
+      name: Seriale gateway
+      required: true
+      selector:
+        text:
+    zone_id:
+      name: ID zona
+      required: true
+      selector:
+        text:
+    day:
+      name: Giorno
+      description: "Numerazione Caleffi: 1 domenica, 2 lunedì, ..., 7 sabato."
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 7
+          mode: box
+    slots:
+      name: Fasce orarie
+      description: "Lista ordinata di elementi con time (HH:MM) e temperature (°C)."
+      required: true
+      selector:
+        object:
+copy_zone_schedule:
+  name: Copia programmazione tra zone
+  description: Copia la settimana completa da una zona a un'altra.
+  fields:
+    source_gateway_serial:
+      name: Seriale gateway sorgente
+      required: true
+      selector:
+        text:
+    source_zone_id:
+      name: ID zona sorgente
+      required: true
+      selector:
+        text:
+    target_gateway_serial:
+      name: Seriale gateway destinazione
+      required: true
+      selector:
+        text:
+    target_zone_id:
+      name: ID zona destinazione
+      required: true
+      selector:
+        text:
+save_schedule_scene:
+  name: Salva scenario di programmazione
+  description: Salva localmente una programmazione definita nei campi slots o days, oppure acquisita da una zona.
+  fields:
+    name:
+      name: Nome scenario
+      required: true
+      selector:
+        text:
+    gateway_serial:
+      name: Seriale gateway
+      required: false
+      selector:
+        text:
+    zone_id:
+      name: ID zona
+      required: false
+      selector:
+        text:
+    scope:
+      name: Ambito
+      description: Scegli giorno per salvare un giorno o settimana per salvare tutti i giorni.
+      required: true
+      selector:
+        select:
+          options:
+            - day
+            - week
+          mode: dropdown
+    day:
+      name: Giorno
+      description: "Obbligatorio per scope day; numerazione Caleffi: 1 domenica, ..., 7 sabato."
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 7
+          mode: box
+    slots:
+      name: Fasce orarie del giorno
+      description: "Definisce direttamente lo scenario day; elementi con time (HH:MM) e temperature (°C)."
+      required: false
+      selector:
+        object:
+    days:
+      name: Programmazione settimanale
+      description: "Definisce direttamente lo scenario week, con chiavi da 1 (domenica) a 7 (sabato) e una lista di fasce per giorno."
+      required: false
+      selector:
+        object:
+    overwrite:
+      name: Sovrascrivi
+      description: Consenti di sostituire uno scenario esistente con lo stesso nome.
+      required: false
+      selector:
+        boolean:
+apply_schedule_scene:
+  name: Applica scenario di programmazione
+  description: Applica a una zona uno scenario giornaliero o settimanale salvato.
+  fields:
+    name:
+      name: Nome scenario
+      required: true
+      selector:
+        text:
+    gateway_serial:
+      name: Seriale gateway destinazione
+      required: true
+      selector:
+        text:
+    zone_id:
+      name: ID zona destinazione
+      required: true
+      selector:
+        text:
+    day:
+      name: Giorno destinazione
+      description: "Solo per scenari day; se omesso usa il giorno originale dello scenario."
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 7
+          mode: box
