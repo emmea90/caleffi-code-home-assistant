@@ -16,7 +16,11 @@ Integrazione personalizzata per Home Assistant che collega il tuo account **Cale
 Per ogni zona del tuo impianto vengono create automaticamente:
 
 - **Termostato (`climate`)**: temperatura attuale, temperatura obiettivo, modalità `Auto`, `Riscaldamento` (manuale) e `Spento`, più i preset Caleffi.
+- **Testina (`cover`)**: comandi separati per aprirla e chiuderla, con la posizione riportata dall'apertura effettiva quando disponibile.
 - **Sensore di temperatura (`sensor`)**: temperatura ambiente della zona (°C), con classe di misura adatta a grafici e statistiche a lungo termine.
+- **Sensore di stato della testina (`sensor`)**: `Aperto` o `Chiuso`, con la percentuale di apertura riportata come attributo quando disponibile.
+- **Programmazione settimanale (`sensor`)**: fasce orarie e temperature di ogni giorno negli attributi `programmazione`.
+- **Switch dei comandi `+`/`−` (`switch`)**: abilita o disabilita la regolazione manuale dalla testina; non apre né chiude la valvola.
 
 Dettagli:
 
@@ -28,6 +32,71 @@ Dettagli:
 | Sessione | Rinnovo ogni 30 minuti; se il token è scaduto, nuovo login con le credenziali salvate |
 | Zone nuove | Rilevate automaticamente, senza riavviare |
 | Entità sensore | `sensor.caleffi_<nome_zona>_temperatura` |
+
+### Modificare la programmazione
+
+Il sensore `sensor.caleffi_<nome_zona>_programmazione_settimanale` contiene l'intera settimana nell'attributo `programmazione`, con un elenco di fasce per ciascun giorno. `ora_fine` indica l'ora alla quale termina la fascia; le temperature sono in °C.
+
+Per sostituire le fasce di un singolo giorno usa l'azione `caleffi_code.set_zone_schedule`. Gli orari devono essere in ordine crescente; il giorno usa la numerazione Caleffi da 1 (domenica) a 7 (sabato). Ogni fascia definisce l'orario di fine e la temperatura fino alla fascia successiva:
+
+```yaml
+action: caleffi_code.set_zone_schedule
+data:
+  gateway_serial: "SERIALE_GATEWAY"
+  zone_id: "1"
+  day: 2
+  slots:
+    - time: "06:30"
+      temperature: 20
+    - time: "08:00"
+      temperature: 17
+    - time: "18:00"
+      temperature: 20
+    - time: "22:30"
+      temperature: 17
+```
+
+Il servizio sostituisce la programmazione dell'intero giorno, non solo le fasce indicate. Gli orari validi vanno da `00:01` a `24:00`; le temperature devono rispettare i limiti configurati sul gateway.
+
+Puoi copiare l'intera settimana da una zona a un'altra con `caleffi_code.copy_zone_schedule`:
+
+```yaml
+action: caleffi_code.copy_zone_schedule
+data:
+  source_gateway_serial: "SERIALE_GATEWAY"
+  source_zone_id: "1"
+  target_gateway_serial: "SERIALE_GATEWAY"
+  target_zone_id: "2"
+```
+
+Gli scenari vengono salvati nella memoria persistente di Home Assistant. `caleffi_code.save_schedule_scene` salva un giorno (`scope: day` e `day`) oppure la settimana completa (`scope: week`). Puoi fornire direttamente le fasce con `slots`/`days` oppure acquisirle dalla programmazione attuale indicando `gateway_serial` e `zone_id`. Se il nome esiste già, occorre impostare `overwrite: true` per sostituirlo. Per definire direttamente uno scenario per il lunedì:
+
+```yaml
+action: caleffi_code.save_schedule_scene
+data:
+  name: "Mattina invernale"
+  scope: day
+  day: 2
+  slots:
+    - time: "06:30"
+      temperature: 20
+    - time: "08:00"
+      temperature: 17
+```
+
+Per acquisire invece il giorno già programmato in una stanza, ometti `slots` e specifica gateway e zona. Per uno scenario settimanale definito direttamente usa `scope: week` e `days`, una mappa con le chiavi `1`-`7` (domenica-sabato) e una lista `time`/`temperature` per ciascun giorno.
+
+Applica uno scenario con `caleffi_code.apply_schedule_scene`. Per uno scenario giornaliero puoi specificare un altro `day` per applicarlo a un giorno diverso; se omesso, viene usato il giorno originale. Gli scenari settimanali applicano tutti e sette i giorni:
+
+```yaml
+action: caleffi_code.apply_schedule_scene
+data:
+  name: "Inverno"
+  gateway_serial: "SERIALE_GATEWAY"
+  zone_id: "2"
+```
+
+La copia e l'applicazione di scenari settimanali inviano gli aggiornamenti un giorno alla volta. Se il cloud rifiuta una richiesta durante l'operazione, i giorni precedenti potrebbero essere già stati aggiornati.
 
 ## Installazione
 

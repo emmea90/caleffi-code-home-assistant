@@ -69,7 +69,51 @@ class CaleffiCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
                         raise CaleffiApiError(
                             f"A Caleffi CODE zone on {serial} has no zone identifier"
                         )
-                    zone_data[str(zone_id)] = zone
+                    zone_id = str(zone_id)
+                    devices = await self.api.async_request(
+                        "GET",
+                        f"code/{quote(serial, safe='')}/zone/"
+                        f"{quote(zone_id, safe='')}/device/confort_control",
+                    )
+                    if not isinstance(devices, list):
+                        raise CaleffiApiError(
+                            f"Caleffi CODE returned an invalid valve list for "
+                            f"{serial} zone {zone_id}"
+                        )
+
+                    valves: dict[str, dict[str, Any]] = {}
+                    for device in devices:
+                        if not isinstance(device, dict):
+                            raise CaleffiApiError(
+                                f"Caleffi CODE returned an invalid valve for "
+                                f"{serial} zone {zone_id}"
+                            )
+                        device_serial = self._field(
+                            device, "serial", "device_sn", "deviceSn", "sn"
+                        )
+                        if device_serial is None:
+                            raise CaleffiApiError(
+                                f"A Caleffi CODE valve on {serial} zone "
+                                f"{zone_id} has no serial number"
+                            )
+                        device_serial = str(device_serial)
+                        device_id = f"1-{device_serial}"
+                        params = await self.api.async_request(
+                            "GET",
+                            f"code/{quote(serial, safe='')}/zone/"
+                            f"{quote(zone_id, safe='')}/device/"
+                            f"{quote(str(device_id), safe='')}",
+                        )
+                        if not isinstance(params, dict):
+                            raise CaleffiApiError(
+                                f"Caleffi CODE returned invalid parameters for "
+                                f"valve {device_serial} on {serial} zone {zone_id}"
+                            )
+                        valves[device_serial] = {
+                            "device": device,
+                            "params": params,
+                        }
+                    zone_data[zone_id] = {**zone, "valves": valves}
 
                 data[serial] = {"gateway": gateway, "zones": zone_data}
             return data

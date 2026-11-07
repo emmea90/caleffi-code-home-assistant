@@ -142,7 +142,7 @@ class CaleffiApi:
         path: str,
         *,
         params: dict[str, Any] | None = None,
-        json_body: dict[str, Any] | None = None,
+        json_body: Any = None,
     ) -> Any:
         """Make an authenticated API request, renewing the session once if needed."""
         token_before = self._access_token
@@ -168,7 +168,7 @@ class CaleffiApi:
         path: str,
         *,
         params: dict[str, Any] | None = None,
-        json_body: dict[str, Any] | None = None,
+        json_body: Any = None,
         headers: dict[str, str] | None = None,
         authenticated: bool = True,
     ) -> Any:
