@@ -37,14 +37,14 @@ Dettagli:
 
 Il sensore `sensor.caleffi_<nome_zona>_programmazione_settimanale` contiene l'intera settimana nell'attributo `programmazione`, con un elenco di fasce per ciascun giorno. `ora_fine` indica l'ora alla quale termina la fascia; le temperature sono in °C.
 
-Per sostituire le fasce di un singolo giorno usa l'azione `caleffi_code.set_zone_schedule`. Gli orari devono essere in ordine crescente; il giorno usa la numerazione Caleffi da 1 (domenica) a 7 (sabato). Ogni fascia definisce l'orario di fine e la temperatura fino alla fascia successiva:
+Per sostituire le fasce di un singolo giorno usa l'azione `caleffi_code.set_zone_schedule`. Gli orari devono essere in ordine crescente; il giorno usa la numerazione Caleffi da 1 (lunedì) a 7 (domenica). Ogni fascia definisce l'orario di fine e la temperatura fino alla fascia successiva:
 
 ```yaml
 action: caleffi_code.set_zone_schedule
 data:
   gateway_serial: "SERIALE_GATEWAY"
   zone_id: "1"
-  day: 2
+  day: 1
   slots:
     - time: "06:30"
       temperature: 20
@@ -76,7 +76,7 @@ action: caleffi_code.save_schedule_scene
 data:
   name: "Mattina invernale"
   scope: day
-  day: 2
+  day: 1
   slots:
     - time: "06:30"
       temperature: 20
@@ -84,7 +84,7 @@ data:
       temperature: 17
 ```
 
-Per acquisire invece il giorno già programmato in una stanza, ometti `slots` e specifica gateway e zona. Per uno scenario settimanale definito direttamente usa `scope: week` e `days`, una mappa con le chiavi `1`-`7` (domenica-sabato) e una lista `time`/`temperature` per ciascun giorno.
+Per acquisire invece il giorno già programmato in una stanza, ometti `slots` e specifica gateway e zona. Per uno scenario settimanale definito direttamente usa `scope: week` e `days`, una mappa con le chiavi `1`-`7` (lunedì-domenica) e una lista `time`/`temperature` per ciascun giorno.
 
 Applica uno scenario con `caleffi_code.apply_schedule_scene`. Per uno scenario giornaliero puoi specificare un altro `day` per applicarlo a un giorno diverso; se omesso, viene usato il giorno originale. Gli scenari settimanali applicano tutti e sette i giorni:
 

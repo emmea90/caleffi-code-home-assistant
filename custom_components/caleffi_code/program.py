@@ -7,13 +7,13 @@ import re
 from typing import Any
 
 DAYS = (
-    "domenica",
     "lunedi",
     "martedi",
     "mercoledi",
     "giovedi",
     "venerdi",
     "sabato",
+    "domenica",
 )
 _TIME_PATTERN = re.compile(r"(?:[01]\d|2[0-3]):[0-5]\d|24:00")
 _MAX_SLOTS_PER_DAY = 8
@@ -69,7 +69,7 @@ def create_day_program(
         or not 1 <= day <= len(DAYS)
     ):
         raise ValueError(
-            "Il giorno deve essere un numero da 1 (domenica) a 7 (sabato)"
+            "Il giorno deve essere un numero da 1 (lunedì) a 7 (domenica)"
         )
     if not isinstance(slots, list) or not 1 <= len(slots) <= _MAX_SLOTS_PER_DAY:
         raise ValueError("Inserisci da 1 a 8 fasce orarie per il giorno")

@@ -14,7 +14,7 @@ set_zone_schedule:
         text:
     day:
       name: Giorno
-      description: "Numerazione Caleffi: 1 domenica, 2 lunedì, ..., 7 sabato."
+      description: "Numerazione Caleffi: 1 lunedì, 2 martedì, ..., 7 domenica."
       required: true
       selector:
         number:
@@ -82,7 +82,7 @@ save_schedule_scene:
           mode: dropdown
     day:
       name: Giorno
-      description: "Obbligatorio per scope day; numerazione Caleffi: 1 domenica, ..., 7 sabato."
+      description: "Obbligatorio per scope day; numerazione Caleffi: 1 lunedì, ..., 7 domenica."
       required: false
       selector:
         number:
@@ -97,7 +97,7 @@ save_schedule_scene:
         object:
     days:
       name: Programmazione settimanale
-      description: "Definisce direttamente lo scenario week, con chiavi da 1 (domenica) a 7 (sabato) e una lista di fasce per giorno."
+      description: "Definisce direttamente lo scenario week, con chiavi da 1 (lunedì) a 7 (domenica) e una lista di fasce per giorno."
       required: false
       selector:
         object:
